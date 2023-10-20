@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/pico.css">
+    <script src="https://demo.htmx.org"></script>
+    <title>Demo Page For htmx: REST Revisted</title>
+
+</head>
+<body>
+<main class="container">
+    <h1>
+        htmx: REST Revisted
+    </h1>
+    <p>
+        This is a demo page for the examples found in the paper "htmx: Restoring The RESTful Network Architecture of the
+        Web".  The examples from the paper are:
+    </p>
+    <ul>
+        <li><a href="#btn">A Simple Button</a></li>
+        <li><a href="#active-search">Active Search</a></li>
+        <li><a href="#lazy-load">Lazy Load</a></li>
+    </ul>
+    <p><b>NOTE:</b>
+        These examples use the AJAX mocking library <a href="https://devon.is-a.dev/mock-requests/">mock-requests</a> to
+        avoid requiring a server, based on the htmx demo infratructure loaded from <a href="https://demo.htmx.org">https://demo.htmx.org</a>.
+    </p>
+    <hr/>
+    <h2><a id="btn" href="#btn">Button Example</a></h2>
+    <p>
+        This button implements the button described in Section 3.1
+    </p>
+    <button hx-trigger="click"
+            hx-get="/info"
+            hx-target="#info-div"
+            hx-swap="innerHTML">
+        Get Information
+    </button>
+    <div id="info-div"></div>
+    <template url="/info">
+        <p>
+            More information on htmx can be
+            found on its website at
+            <a href="https://htmx.org">
+                htmx.org
+            </a>
+        </p>
+    </template>
+    <hr/>
+
+    <h2><a id="active-search" href="#active-search">Active Search</a></h2>
+    <p>
+        This search input implements active search pattern discussed in Section 3.3.  As you type, color
+        codes for HTML will be searched and displayed that match your string.  For example "Gr" will match HTML colors
+        with "Green" and "Gray" in their name.
+    </p>
+    <input type="search"
+           name="search"
+           hx-get="/search"
+           hx-trigger="keyup delay:500ms"
+           autocomplete="false"
+           hx-target="#search-results">
+    <div id="search-results">
+    </div>
+
+    <template url="/search">
+        ${searchColors(search)}
+    </template>
+
+<script>
+    let COLORS = ("#000000\tBlack (W3C)\n" +
+        "#040720\tBlack Blue\n" +
+        "#0C090A\tNight\n" +
+        "#34282C\tCharcoal\n" +
+        "#3B3131\tOil\n" +
+        "#3A3B3C\tDark Gray\n" +
+        "#454545\tLight Black\n" +
+        "#413839\tBlack Cat\n" +
+        "#3D3C3A\tIridium\n" +
+        "#463E3F\tBlack Eel\n" +
+        "#4C4646\tBlack Cow\n" +
+        "#504A4B\tGray Wolf\n" +
+        "#565051\tVampire Gray\n" +
+        "#52595D\tIron Gray\n" +
+        "#5C5858\tGray Dolphin\n" +
+        "#625D5D\tCarbon Gray\n" +
+        "#666362\tAsh Gray\n" +
+        "#696969\tDimGray or DimGrey (W3C)\n" +
+        "#686A6C\tNardo Gray\n" +
+        "#6D6968\tCloudy Gray\n" +
+        "#726E6D\tSmokey Gray\n" +
+        "#736F6E\tAlien Gray\n" +
+        "#757575\tSonic Silver\n" +
+        "#797979\tPlatinum Gray\n" +
+        "#837E7C\tGranite\n" +
+        "#808080\tGray or Grey (W3C)\n" +
+        "#848482\tBattleship Gray\n" +
+        "#8C8C8C\tDark Gainsboro\n" +
+        "#8D918D\tGunmetal Gray\n" +
+        "#A9A9A9\tDarkGray or DarkGrey (W3C)\n" +
+        "#B6B6B4\tGray Cloud\n" +
+        "#C0C0C0\tSilver (W3C)\n" +
+        "#C9C0BB\tPale Silver\n" +
+        "#D1D0CE\tGray Goose\n" +
+        "#CECECE\tPlatinum Silver\n" +
+        "#D3D3D3\tLightGray or LightGrey (W3C)\n" +
+        "#DADBDD\tSilver White\n" +
+        "#DCDCDC\tGainsboro (W3C)\n" +
+        "#E5E4E2\tPlatinum\n" +
+        "#BCC6CC\tMetallic Silver\n" +
+        "#98AFC7\tBlue Gray\n" +
+        "#838996\tRoman Silver\n" +
+        "#778899\tLightSlateGray or LightSlateGrey (W3C)\n" +
+        "#708090\tSlateGray or SlateGrey (W3C)\n" +
+        "#6D7B8D\tRat Gray\n" +
+        "#657383\tSlate Granite Gray\n" +
+        "#616D7E\tJet Gray\n" +
+        "#646D7E\tMist Blue\n" +
+        "#566D7E\tMarble Blue\n" +
+        "#737CA1\tSlate Blue Grey\n" +
+        "#728FCE\tLight Purple Blue\n" +
+        "#4863A0\tAzure Blue\n" +
+        "#2F539B\tEstoril Blue\n" +
+        "#2B547E\tBlue Jay\n" +
+        "#36454F\tCharcoal Blue\n" +
+        "#29465B\tDark Blue Grey\n" +
+        "#2B3856\tDark Slate\n" +
+        "#123456\tDeep-Sea Blue\n" +
+        "#151B54\tNight Blue\n" +
+        "#191970\tMidnightBlue (W3C)\n" +
+        "#000080\tNavy (W3C)\n" +
+        "#151B8D\tDenim Dark Blue\n" +
+        "#00008B\tDarkBlue (W3C)\n" +
+        "#15317E\tLapis Blue\n" +
+        "#0000A0\tNew Midnight Blue\n" +
+        "#0000A5\tEarth Blue\n" +
+        "#0020C2\tCobalt Blue\n" +
+        "#0000CD\tMediumBlue (W3C)\n" +
+        "#0041C2\tBlueberry Blue\n" +
+        "#2916F5\tCanary Blue\n" +
+        "#0000FF\tBlue (W3C)\n" +
+        "#0002FF\tSamco Blue\n" +
+        "#0909FF\tBright Blue\n" +
+        "#1F45FC\tBlue Orchid\n" +
+        "#2554C7\tSapphire Blue\n" +
+        "#1569C7\tBlue Eyes\n" +
+        "#1974D2\tBright Navy Blue\n" +
+        "#2B60DE\tBalloon Blue\n" +
+        "#4169E1\tRoyalBlue (W3C)\n" +
+        "#2B65EC\tOcean Blue\n" +
+        "#306EFF\tBlue Ribbon\n" +
+        "#157DEC\tBlue Dress\n" +
+        "#1589FF\tNeon Blue\n" +
+        "#1E90FF\tDodgerBlue (W3C)\n" +
+        "#368BC1\tGlacial Blue Ice\n" +
+        "#4682B4\tSteelBlue (W3C)\n" +
+        "#488AC7\tSilk Blue\n" +
+        "#357EC7\tWindows Blue\n" +
+        "#3090C7\tBlue Ivy\n" +
+        "#659EC7\tBlue Koi\n" +
+        "#87AFC7\tColumbia Blue\n" +
+        "#95B9C7\tBaby Blue\n" +
+        "#6495ED\tCornflowerBlue (W3C)\n" +
+        "#6698FF\tSky Blue Dress\n" +
+        "#56A5EC\tIceberg\n" +
+        "#38ACEC\tButterfly Blue\n" +
+        "#00BFFF\tDeepSkyBlue (W3C)\n" +
+        "#3BB9FF\tMidday Blue\n" +
+        "#5CB3FF\tCrystal Blue\n" +
+        "#79BAEC\tDenim Blue\n" +
+        "#82CAFF\tDay Sky Blue\n" +
+        "#87CEFA\tLightSkyBlue (W3C)\n" +
+        "#87CEEB\tSkyBlue (W3C)\n" +
+        "#A0CFEC\tJeans Blue\n" +
+        "#B7CEEC\tBlue Angel\n" +
+        "#B4CFEC\tPastel Blue\n" +
+        "#ADDFFF\tLight Day Blue\n" +
+        "#C2DFFF\tSea Blue\n" +
+        "#C6DEFF\tHeavenly Blue\n" +
+        "#BDEDFF\tRobin Egg Blue\n" +
+        "#B0E0E6\tPowderBlue (W3C)\n" +
+        "#AFDCEC\tCoral Blue\n" +
+        "#ADD8E6\tLightBlue (W3C)\n" +
+        "#B0CFDE\tLightSteelBlue (W3C)\n" +
+        "#C9DFEC\tGulf Blue\n" +
+        "#D5D6EA\tPastel Light Blue\n" +
+        "#E3E4FA\tLavender Blue\n" +
+        "#DBE9FA\tWhite Blue\n" +
+        "#E6E6FA\tLavender (W3C)\n" +
+        "#EBF4FA\tWater\n" +
+        "#F0F8FF\tAliceBlue (W3C)\n" +
+        "#F8F8FF\tGhostWhite (W3C)\n" +
+        "#F0FFFF\tAzure (W3C)\n" +
+        "#E0FFFF\tLightCyan (W3C)\n" +
+        "#CCFFFF\tLight Slate\n" +
+        "#9AFEFF\tElectric Blue\n" +
+        "#7DFDFE\tTron Blue\n" +
+        "#57FEFF\tBlue Zircon\n" +
+        "#00FFFF\tAqua or Cyan (W3C)\n" +
+        "#0AFFFF\tBright Cyan\n" +
+        "#50EBEC\tCeleste\n" +
+        "#4EE2EC\tBlue Diamond\n" +
+        "#16E2F5\tBright Turquoise\n" +
+        "#8EEBEC\tBlue Lagoon\n" +
+        "#AFEEEE\tPaleTurquoise (W3C)\n" +
+        "#CFECEC\tPale Blue Lily\n" +
+        "#B3D9D9\tLight Teal\n" +
+        "#81D8D0\tTiffany Blue\n" +
+        "#77BFC7\tBlue Hosta\n" +
+        "#92C7C7\tCyan Opaque\n" +
+        "#78C7C7\tNorthern Lights Blue\n" +
+        "#7BCCB5\tBlue Green\n" +
+        "#66CDAA\tMediumAquaMarine (W3C)\n" +
+        "#93E9BE\tAqua Seafoam Green\n" +
+        "#AAF0D1\tMagic Mint\n" +
+        "#93FFE8\tLight Aquamarine\n" +
+        "#7FFFD4\tAquamarine (W3C)\n" +
+        "#01F9C6\tBright Teal\n" +
+        "#40E0D0\tTurquoise (W3C)\n" +
+        "#48D1CC\tMediumTurquoise (W3C)\n" +
+        "#48CCCD\tDeep Turquoise\n" +
+        "#46C7C7\tJellyfish\n" +
+        "#43C6DB\tBlue Turquoise\n" +
+        "#00CED1\tDarkTurquoise (W3C)\n" +
+        "#43BFC7\tMacaw Blue Green\n" +
+        "#20B2AA\tLightSeaGreen (W3C)\n" +
+        "#3EA99F\tSeafoam Green\n" +
+        "#5F9EA0\tCadetBlue (W3C)\n" +
+        "#3B9C9C\tDeep-Sea\n" +
+        "#008B8B\tDarkCyan (W3C)\n" +
+        "#00827F\tTeal Green\n" +
+        "#008080\tTeal (W3C)\n" +
+        "#007C80\tTeal Blue\n" +
+        "#045F5F\tMedium Teal\n" +
+        "#045D5D\tDark Teal\n" +
+        "#033E3E\tDeep Teal\n" +
+        "#25383C\tDarkSlateGray or DarkSlateGrey (W3C)\n" +
+        "#2C3539\tGunmetal\n" +
+        "#3C565B\tBlue Moss Green\n" +
+        "#4C787E\tBeetle Green\n" +
+        "#5E7D7E\tGrayish Turquoise\n" +
+        "#307D7E\tGreenish Blue\n" +
+        "#348781\tAquamarine Stone\n" +
+        "#438D80\tSea Turtle Green\n" +
+        "#4E8975\tDull-Sea Green\n" +
+        "#1F6357\tDark Green Blue\n" +
+        "#306754\tDeep-Sea Green\n" +
+        "#006A4E\tBottle Green\n" +
+        "#2E8B57\tSeaGreen (W3C)\n" +
+        "#1B8A6B\tElf Green\n" +
+        "#31906E\tDark Mint\n" +
+        "#00A36C\tJade\n" +
+        "#34A56F\tEarth Green\n" +
+        "#1AA260\tChrome Green\n" +
+        "#3EB489\tMint\n" +
+        "#50C878\tEmerald\n" +
+        "#22CE83\tIsle Of Man Green\n" +
+        "#3CB371\tMediumSeaGreen (W3C)\n" +
+        "#7C9D8E\tMetallic Green\n" +
+        "#78866B\tCamouflage Green\n" +
+        "#848B79\tSage Green\n" +
+        "#617C58\tHazel Green\n" +
+        "#728C00\tVenom Green\n" +
+        "#6B8E23\tOliveDrab (W3C)\n" +
+        "#808000\tOlive (W3C)\n" +
+        "#555D50\tEbony\n" +
+        "#556B2F\tDarkOliveGreen (W3C)\n" +
+        "#4E5B31\tMilitary Green\n" +
+        "#3A5F0B\tGreen Leaves\n" +
+        "#4B5320\tArmy Green\n" +
+        "#667C26\tFern Green\n" +
+        "#4E9258\tFall Forest Green\n" +
+        "#08A04B\tIrish Green\n" +
+        "#387C44\tPine Green\n" +
+        "#347235\tMedium Forest Green\n" +
+        "#27742C\tRacing Green\n" +
+        "#347C2C\tJungle Green\n" +
+        "#227442\tCactus Green\n" +
+        "#228B22\tForestGreen (W3C)\n" +
+        "#008000\tGreen (W3C)\n" +
+        "#006400\tDarkGreen (W3C)\n" +
+        "#056608\tDeep Green\n" +
+        "#046307\tDeep Emerald Green\n" +
+        "#355E3B\tHunter Green\n" +
+        "#254117\tDark Forest Green\n" +
+        "#004225\tLotus Green\n" +
+        "#437C17\tSeaweed Green\n" +
+        "#347C17\tShamrock Green\n" +
+        "#6AA121\tGreen Onion\n" +
+        "#8A9A5B\tMoss Green\n" +
+        "#3F9B0B\tGrass Green\n" +
+        "#4AA02C\tGreen Pepper\n" +
+        "#41A317\tDark Lime Green\n" +
+        "#12AD2B\tParrot Green\n" +
+        "#3EA055\tClover Green\n" +
+        "#73A16C\tDinosaur Green\n" +
+        "#6CBB3C\tGreen Snake\n" +
+        "#6CC417\tAlien Green\n" +
+        "#4CC417\tGreen Apple\n" +
+        "#32CD32\tLimeGreen (W3C)\n" +
+        "#52D017\tPea Green\n" +
+        "#4CC552\tKelly Green\n" +
+        "#54C571\tZombie Green\n" +
+        "#89C35C\tGreen Peas\n" +
+        "#85BB65\tDollar Bill Green\n" +
+        "#99C68E\tFrog Green\n" +
+        "#A0D6B4\tTurquoise Green\n" +
+        "#8FBC8F\tDarkSeaGreen (W3C)\n" +
+        "#829F82\tBasil Green\n" +
+        "#A2AD9C\tGray Green\n" +
+        "#B8BC86\tLight Olive Green\n" +
+        "#9CB071\tIguana Green\n" +
+        "#8FB31D\tCitron Green\n" +
+        "#B0BF1A\tAcid Green\n" +
+        "#B2C248\tAvocado Green\n" +
+        "#9DC209\tPistachio Green\n" +
+        "#A1C935\tSalad Green\n" +
+        "#9ACD32\tYellowGreen (W3C)\n" +
+        "#77DD77\tPastel Green\n" +
+        "#7FE817\tHummingbird Green\n" +
+        "#59E817\tNebula Green\n" +
+        "#57E964\tStoplight Go Green\n" +
+        "#16F529\tNeon Green\n" +
+        "#5EFB6E\tJade Green\n" +
+        "#36F57F\tLime Mint Green\n" +
+        "#00FF7F\tSpringGreen (W3C)\n" +
+        "#00FA9A\tMediumSpringGreen (W3C)\n" +
+        "#12E193\tAqua Green\n" +
+        "#5FFB17\tEmerald Green\n" +
+        "#00FF00\tLime (W3C)\n" +
+        "#7CFC00\tLawnGreen (W3C)\n" +
+        "#66FF00\tBright Green\n" +
+        "#7FFF00\tChartreuse (W3C)\n" +
+        "#87F717\tYellow Lawn Green\n" +
+        "#98F516\tAloe Vera Green\n" +
+        "#B1FB17\tDull Green Yellow\n" +
+        "#ADF802\tLemon Green\n" +
+        "#ADFF2F\tGreenYellow (W3C)\n" +
+        "#BDF516\tChameleon Green\n" +
+        "#DAEE01\tNeon Yellow Green\n" +
+        "#E2F516\tYellow Green Grosbeak\n" +
+        "#CCFB5D\tTea Green\n" +
+        "#BCE954\tSlime Green\n" +
+        "#64E986\tAlgae Green\n" +
+        "#90EE90\tLightGreen (W3C)\n" +
+        "#6AFB92\tDragon Green\n" +
+        "#98FB98\tPaleGreen (W3C)\n" +
+        "#98FF98\tMint Green\n" +
+        "#B5EAAA\tGreen Thumb\n" +
+        "#E3F9A6\tOrganic Brown\n" +
+        "#C3FDB8\tLight Jade\n" +
+        "#C2E5D3\tLight Mint Green\n" +
+        "#DBF9DB\tLight Rose Green\n" +
+        "#E8F1D4\tChrome White\n" +
+        "#F0FFF0\tHoneyDew (W3C)\n" +
+        "#F5FFFA\tMintCream (W3C)\n" +
+        "#FFFACD\tLemonChiffon (W3C)\n" +
+        "#FFFFC2\tParchment\n" +
+        "#FFFFCC\tCream\n" +
+        "#FFFDD0\tCream White\n" +
+        "#FAFAD2\tLightGoldenRodYellow (W3C)\n" +
+        "#FFFFE0\tLightYellow (W3C)\n" +
+        "#F5F5DC\tBeige (W3C)\n" +
+        "#FFF8DC\tCornsilk (W3C)\n" +
+        "#FBF6D9\tBlonde\n" +
+        "#FAEBD7\tAntiqueWhite (W3C)\n" +
+        "#FFF0DB\tLight Beige\n" +
+        "#FFEFD5\tPapayaWhip (W3C)\n" +
+        "#F7E7CE\tChampagne\n" +
+        "#FFEBCD\tBlanchedAlmond (W3C)\n" +
+        "#FFE4C4\tBisque (W3C)\n" +
+        "#F5DEB3\tWheat (W3C)\n" +
+        "#FFE4B5\tMoccasin (W3C)\n" +
+        "#FFE5B4\tPeach\n" +
+        "#FED8B1\tLight Orange\n" +
+        "#FFDAB9\tPeachPuff (W3C)\n" +
+        "#FBD5AB\tCoral Peach\n" +
+        "#FFDEAD\tNavajoWhite (W3C)\n" +
+        "#FBE7A1\tGolden Blonde\n" +
+        "#F3E3C3\tGolden Silk\n" +
+        "#F0E2B6\tDark Blonde\n" +
+        "#F1E5AC\tLight Gold\n" +
+        "#F3E5AB\tVanilla\n" +
+        "#ECE5B6\tTan Brown\n" +
+        "#E8E4C9\tDirty White\n" +
+        "#EEE8AA\tPaleGoldenRod (W3C)\n" +
+        "#F0E68C\tKhaki (W3C)\n" +
+        "#EDDA74\tCardboard Brown\n" +
+        "#EDE275\tHarvest Gold\n" +
+        "#FFE87C\tSun Yellow\n" +
+        "#FFF380\tCorn Yellow\n" +
+        "#FAF884\tPastel Yellow\n" +
+        "#FFFF33\tNeon Yellow\n" +
+        "#FFFF00\tYellow (W3C)\n" +
+        "#FFEF00\tCanary Yellow\n" +
+        "#F5E216\tBanana Yellow\n" +
+        "#FFDB58\tMustard Yellow\n" +
+        "#FFDF00\tGolden Yellow\n" +
+        "#F9DB24\tBold Yellow\n" +
+        "#EED202\tSafety Yellow\n" +
+        "#FFD801\tRubber Ducky Yellow\n" +
+        "#FFD700\tGold (W3C)\n" +
+        "#FDD017\tBright Gold\n" +
+        "#FFCE44\tChrome Gold\n" +
+        "#EAC117\tGolden Brown\n" +
+        "#F6BE00\tDeep Yellow\n" +
+        "#F2BB66\tMacaroni and Cheese\n" +
+        "#FBB917\tSaffron\n" +
+        "#FDBD01\tNeon Gold\n" +
+        "#FBB117\tBeer\n" +
+        "#FFAE42\tYellow Orange or Orange Yellow\n" +
+        "#FFA62F\tCantaloupe\n" +
+        "#FFA600\tCheese Orange\n" +
+        "#FFA500\tOrange (W3C)\n" +
+        "#EE9A4D\tBrown Sand\n" +
+        "#F4A460\tSandyBrown (W3C)\n" +
+        "#E2A76F\tBrown Sugar\n" +
+        "#C19A6B\tCamel Brown\n" +
+        "#E6BF83\tDeer Brown\n" +
+        "#DEB887\tBurlyWood (W3C)\n" +
+        "#D2B48C\tTan (W3C)\n" +
+        "#C8AD7F\tLight French Beige\n" +
+        "#C2B280\tSand\n" +
+        "#BCB88A\tSage\n" +
+        "#C8B560\tFall Leaf Brown\n" +
+        "#C9BE62\tGinger Brown\n" +
+        "#C9AE5D\tBronze Gold\n" +
+        "#BDB76B\tDarkKhaki (W3C)\n" +
+        "#BAB86C\tOlive Green\n" +
+        "#B5A642\tBrass\n" +
+        "#C7A317\tCookie Brown\n" +
+        "#D4AF37\tMetallic Gold\n" +
+        "#E9AB17\tBee Yellow\n" +
+        "#E8A317\tSchool Bus Yellow\n" +
+        "#DAA520\tGoldenRod (W3C)\n" +
+        "#D4A017\tOrange Gold\n" +
+        "#C68E17\tCaramel\n" +
+        "#B8860B\tDarkGoldenRod (W3C)\n" +
+        "#C58917\tCinnamon\n" +
+        "#CD853F\tPeru (W3C)\n" +
+        "#CD7F32\tBronze\n" +
+        "#C88141\tTiger Orange\n" +
+        "#B87333\tCopper\n" +
+        "#AA6C39\tDark Gold\n" +
+        "#A97142\tMetallic Bronze\n" +
+        "#AB784E\tDark Almond\n" +
+        "#966F33\tWood\n" +
+        "#806517\tOak Brown\n" +
+        "#665D1E\tAntique Bronze\n" +
+        "#8E7618\tHazel\n" +
+        "#8B8000\tDark Yellow\n" +
+        "#827839\tDark Moccasin\n" +
+        "#8A865D\tKhaki Green\n" +
+        "#93917C\tMillennium Jade\n" +
+        "#9F8C76\tDark Beige\n" +
+        "#AF9B60\tBullet Shell\n" +
+        "#827B60\tArmy Brown\n" +
+        "#786D5F\tSandstone\n" +
+        "#483C32\tTaupe\n" +
+        "#4A412A\tDark Grayish Olive\n" +
+        "#493D26\tMocha\n" +
+        "#513B1C\tMilk Chocolate\n" +
+        "#3D3635\tGray Brown\n" +
+        "#3B2F2F\tDark Coffee\n" +
+        "#49413F\tWestern Charcoal\n" +
+        "#43302E\tOld Burgundy\n" +
+        "#622F22\tRed Brown\n" +
+        "#5C3317\tBakers Brown\n" +
+        "#644117\tPullman Brown\n" +
+        "#654321\tDark Brown\n" +
+        "#704214\tSepia Brown\n" +
+        "#804A00\tDark Bronze\n" +
+        "#6F4E37\tCoffee\n" +
+        "#835C3B\tBrown Bear\n" +
+        "#7F5217\tRed Dirt\n" +
+        "#7F462C\tSepia\n" +
+        "#A0522D\tSienna (W3C)\n" +
+        "#8B4513\tSaddleBrown (W3C)\n" +
+        "#8A4117\tDark Sienna\n" +
+        "#7E3817\tSangria\n" +
+        "#7E3517\tBlood Red\n" +
+        "#954535\tChestnut\n" +
+        "#9E4638\tCoral Brown\n" +
+        "#C34A2C\tChestnut Red\n" +
+        "#B83C08\tGinger Red\n" +
+        "#C04000\tMahogany\n" +
+        "#EB5406\tRed Gold\n" +
+        "#C35817\tRed Fox\n" +
+        "#B86500\tDark Bisque\n" +
+        "#B5651D\tLight Brown\n" +
+        "#B76734\tPetra Gold\n" +
+        "#C36241\tRust\n" +
+        "#CB6D51\tCopper Red\n" +
+        "#C47451\tOrange Salmon\n" +
+        "#D2691E\tChocolate (W3C)\n" +
+        "#CC6600\tSedona\n" +
+        "#E56717\tPapaya Orange\n" +
+        "#E66C2C\tHalloween Orange\n" +
+        "#FF6700\tNeon Orange\n" +
+        "#FF5F1F\tBright Orange\n" +
+        "#FE632A\tFluro Orange\n" +
+        "#F87217\tPumpkin Orange\n" +
+        "#FF7900\tSafety Orange\n" +
+        "#F88017\tCarrot Orange\n" +
+        "#FF8C00\tDarkOrange (W3C)\n" +
+        "#F87431\tConstruction Cone Orange\n" +
+        "#FF7722\tIndian Saffron\n" +
+        "#E67451\tSunrise Orange\n" +
+        "#FF8040\tMango Orange\n" +
+        "#FF7F50\tCoral (W3C)\n" +
+        "#F88158\tBasket Ball Orange\n" +
+        "#F9966B\tLight Salmon Rose\n" +
+        "#FFA07A\tLightSalmon (W3C)\n" +
+        "#F89880\tPink Orange\n" +
+        "#E9967A\tDarkSalmon (W3C)\n" +
+        "#E78A61\tTangerine\n" +
+        "#DA8A67\tLight Copper\n" +
+        "#FF8674\tSalmon Pink\n" +
+        "#FA8072\tSalmon (W3C)\n" +
+        "#F98B88\tPeach Pink\n" +
+        "#F08080\tLightCoral (W3C)\n" +
+        "#F67280\tPastel Red\n" +
+        "#E77471\tPink Coral\n" +
+        "#F75D59\tBean Red\n" +
+        "#E55451\tValentine Red\n" +
+        "#CD5C5C\tIndianRed (W3C)\n" +
+        "#FF6347\tTomato (W3C)\n" +
+        "#E55B3C\tShocking Orange\n" +
+        "#FF4500\tOrangeRed (W3C)\n" +
+        "#FF0000\tRed (W3C)\n" +
+        "#FD1C03\tNeon Red\n" +
+        "#FF2400\tScarlet Red\n" +
+        "#F62217\tRuby Red\n" +
+        "#F70D1A\tFerrari Red\n" +
+        "#F62817\tFire Engine Red\n" +
+        "#E42217\tLava Red\n" +
+        "#E41B17\tLove Red\n" +
+        "#DC381F\tGrapefruit\n" +
+        "#C24641\tCherry Red\n" +
+        "#C11B17\tChilli Pepper\n" +
+        "#B22222\tFireBrick (W3C)\n" +
+        "#B21807\tTomato Sauce Red\n" +
+        "#A52A2A\tBrown (W3C)\n" +
+        "#A70D2A\tCarbon Red\n" +
+        "#9F000F\tCranberry\n" +
+        "#931314\tSaffron Red\n" +
+        "#990000\tCrimson Red\n" +
+        "#990012\tRed Wine or Wine Red\n" +
+        "#8B0000\tDarkRed (W3C)\n" +
+        "#8F0B0B\tMaroon Red\n" +
+        "#800000\tMaroon (W3C)\n" +
+        "#8C001A\tBurgundy\n" +
+        "#7E191B\tVermilion\n" +
+        "#800517\tDeep Red\n" +
+        "#733635\tGarnet Red\n" +
+        "#660000\tRed Blood\n" +
+        "#551606\tBlood Night\n" +
+        "#560319\tDark Scarlet\n" +
+        "#3F000F\tChocolate Brown\n" +
+        "#3D0C02\tBlack Bean\n" +
+        "#2F0909\tDark Maroon\n" +
+        "#2B1B17\tMidnight\n" +
+        "#550A35\tPurple Lily\n" +
+        "#810541\tPurple Maroon\n" +
+        "#7D0541\tPlum Pie\n" +
+        "#7D0552\tPlum Velvet\n" +
+        "#872657\tDark Raspberry\n" +
+        "#7E354D\tVelvet Maroon\n" +
+        "#7F4E52\tRosy-Finch\n" +
+        "#7F525D\tDull Purple\n" +
+        "#7F5A58\tPuce\n" +
+        "#997070\tRose Dust\n" +
+        "#B1907F\tPastel Brown\n" +
+        "#B38481\tRosy Pink\n" +
+        "#BC8F8F\tRosyBrown (W3C)\n" +
+        "#C5908E\tKhaki Rose\n" +
+        "#C48793\tLipstick Pink\n" +
+        "#CC7A8B\tDusky Pink\n" +
+        "#C48189\tPink Brown\n" +
+        "#C08081\tOld Rose\n" +
+        "#D58A94\tDusty Pink\n" +
+        "#E799A3\tPink Daisy\n" +
+        "#E8ADAA\tRose\n" +
+        "#C9A9A6\tDusty Rose\n" +
+        "#C4AEAD\tSilver Pink\n" +
+        "#E6C7C2\tGold Pink\n" +
+        "#ECC5C0\tRose Gold\n" +
+        "#FFCBA4\tDeep Peach\n" +
+        "#F8B88B\tPastel Orange\n" +
+        "#EDC9AF\tDesert Sand\n" +
+        "#FFDDCA\tUnbleached Silk\n" +
+        "#FDD7E4\tPig Pink\n" +
+        "#F2D4D7\tPale Pink\n" +
+        "#FFE6E8\tBlush\n" +
+        "#FFE4E1\tMistyRose (W3C)\n" +
+        "#FFDFDD\tPink Bubble Gum\n" +
+        "#FBCFCD\tLight Rose\n" +
+        "#FFCCCB\tLight Red\n" +
+        "#F6C6BD\tWarm Pink\n" +
+        "#FBBBB9\tDeep Rose\n" +
+        "#FFC0CB\tPink (W3C)\n" +
+        "#FFB6C1\tLightPink (W3C)\n" +
+        "#FFB8BF\tSoft Pink\n" +
+        "#FFB2D0\tPowder Pink\n" +
+        "#FAAFBE\tDonut Pink\n" +
+        "#FAAFBA\tBaby Pink\n" +
+        "#F9A7B0\tFlamingo Pink\n" +
+        "#FEA3AA\tPastel Pink\n" +
+        "#E7A1B0\tRose Pink or Pink Rose\n" +
+        "#E38AAE\tCadillac Pink\n" +
+        "#F778A1\tCarnation Pink\n" +
+        "#E5788F\tPastel Rose\n" +
+        "#E56E94\tBlush Red\n" +
+        "#DB7093\tPaleVioletRed (W3C)\n" +
+        "#D16587\tPurple Pink\n" +
+        "#C25A7C\tTulip Pink\n" +
+        "#C25283\tBashful Pink\n" +
+        "#E75480\tDark Pink\n" +
+        "#F660AB\tDark Hot Pink\n" +
+        "#FF69B4\tHotPink (W3C)\n" +
+        "#FC6C85\tWatermelon Pink\n" +
+        "#F6358A\tViolet Red\n" +
+        "#F52887\tHot Deep Pink\n" +
+        "#FF007F\tBright Pink\n" +
+        "#FF1493\tDeepPink (W3C)\n" +
+        "#F535AA\tNeon Pink\n" +
+        "#FF33AA\tChrome Pink\n" +
+        "#FD349C\tNeon Hot Pink\n" +
+        "#E45E9D\tPink Cupcake\n" +
+        "#E759AC\tRoyal Pink\n" +
+        "#E3319D\tDimorphotheca Magenta\n" +
+        "#DA1884\tBarbie Pink\n" +
+        "#E4287C\tPink Lemonade\n" +
+        "#FA2A55\tRed Pink\n" +
+        "#E30B5D\tRaspberry\n" +
+        "#DC143C\tCrimson (W3C)\n" +
+        "#C32148\tBright Maroon\n" +
+        "#C21E56\tRose Red\n" +
+        "#C12869\tRogue Pink\n" +
+        "#C12267\tBurnt Pink\n" +
+        "#CA226B\tPink Violet\n" +
+        "#CC338B\tMagenta Pink\n" +
+        "#C71585\tMediumVioletRed (W3C)\n" +
+        "#C12283\tDark Carnation Pink\n" +
+        "#B3446C\tRaspberry Purple\n" +
+        "#B93B8F\tPink Plum\n" +
+        "#DA70D6\tOrchid (W3C)\n" +
+        "#DF73D4\tDeep Mauve\n" +
+        "#EE82EE\tViolet (W3C)\n" +
+        "#FF77FF\tFuchsia Pink\n" +
+        "#F433FF\tBright Neon Pink\n" +
+        "#FF00FF\tFuchsia or Magenta (W3C)\n" +
+        "#E238EC\tCrimson Purple\n" +
+        "#D462FF\tHeliotrope Purple\n" +
+        "#C45AEC\tTyrian Purple\n" +
+        "#BA55D3\tMediumOrchid (W3C)\n" +
+        "#A74AC7\tPurple Flower\n" +
+        "#B048B5\tOrchid Purple\n" +
+        "#B666D2\tRich Lilac\n" +
+        "#D291BC\tPastel Violet\n" +
+        "#A17188\tRosy\n" +
+        "#915F6D\tMauve Taupe\n" +
+        "#7E587E\tViola Purple\n" +
+        "#614051\tEggplant\n" +
+        "#583759\tPlum Purple\n" +
+        "#5E5A80\tGrape\n" +
+        "#4E5180\tPurple Navy\n" +
+        "#6A5ACD\tSlateBlue (W3C)\n" +
+        "#6960EC\tBlue Lotus\n" +
+        "#5865F2\tBlurple\n" +
+        "#736AFF\tLight Slate Blue\n" +
+        "#7B68EE\tMediumSlateBlue (W3C)\n" +
+        "#7575CF\tPeriwinkle Purple\n" +
+        "#6667AB\tVery Peri\n" +
+        "#6F2DA8\tBright Grape\n" +
+        "#6A0DAD\tBright Purple\n" +
+        "#6C2DC7\tPurple Amethyst\n" +
+        "#5539CC\tDark Blurple\n" +
+        "#5453A6\tDeep Periwinkle\n" +
+        "#483D8B\tDarkSlateBlue (W3C)\n" +
+        "#4E387E\tPurple Haze\n" +
+        "#571B7E\tPurple Iris\n" +
+        "#4B0150\tDark Purple\n" +
+        "#36013F\tDeep Purple\n" +
+        "#2E1A47\tMidnight Purple\n" +
+        "#461B7E\tPurple Monster\n" +
+        "#4B0082\tIndigo (W3C)\n" +
+        "#342D7E\tBlue Whale\n" +
+        "#663399\tRebeccaPurple (W3C)\n" +
+        "#6A287E\tPurple Jam\n" +
+        "#8B008B\tDarkMagenta (W3C)\n" +
+        "#800080\tPurple (W3C)\n" +
+        "#86608E\tFrench Lilac\n" +
+        "#9932CC\tDarkOrchid (W3C)\n" +
+        "#9400D3\tDarkViolet (W3C)\n" +
+        "#8D38C9\tPurple Violet\n" +
+        "#A23BEC\tJasmine Purple\n" +
+        "#B041FF\tPurple Daffodil\n" +
+        "#842DCE\tClematis Violet\n" +
+        "#8A2BE2\tBlueViolet (W3C)\n" +
+        "#7A5DC7\tPurple Sage Bush\n" +
+        "#7F38EC\tLovely Purple\n" +
+        "#9D00FF\tNeon Purple\n" +
+        "#8E35EF\tPurple Plum\n" +
+        "#893BFF\tAztech Purple\n" +
+        "#9370DB\tMediumPurple (W3C)\n" +
+        "#8467D7\tLight Purple\n" +
+        "#9172EC\tCrocus Purple\n" +
+        "#9E7BFF\tPurple Mimosa\n" +
+        "#967BB6\tLavender Purple\n" +
+        "#B09FCA\tRose Purple\n" +
+        "#CCCCFF\tPeriwinkle\n" +
+        "#DCD0FF\tPale Lilac\n" +
+        "#C8A2C8\tLilac\n" +
+        "#E0B0FF\tMauve\n" +
+        "#D891EF\tBright Lilac\n" +
+        "#C38EC7\tPurple Dragon\n" +
+        "#DDA0DD\tPlum (W3C)\n" +
+        "#E6A9EC\tBlush Pink\n" +
+        "#F2A2E8\tPastel Purple\n" +
+        "#F9B7FF\tBlossom Pink\n" +
+        "#C6AEC7\tWisteria Purple\n" +
+        "#D2B9D3\tPurple Thistle\n" +
+        "#D8BFD8\tThistle (W3C)\n" +
+        "#DFD3E3\tPurple White\n" +
+        "#E9CFEC\tPeriwinkle Pink\n" +
+        "#FCDFFF\tCotton Candy\n" +
+        "#EBDDE2\tLavender Pinocchio\n" +
+        "#E1D9D1\tDark White\n" +
+        "#E9E4D4\tAsh White\n" +
+        "#EFEBD8\tWarm White\n" +
+        "#EDE6D6\tWhite Chocolate\n" +
+        "#F8F0E3\tOff White\n" +
+        "#FAF0DD\tSoft Ivory\n" +
+        "#FFF8E7\tCosmic Latte\n" +
+        "#F8F6F0\tPearl White\n" +
+        "#F3E8EA\tRed White\n" +
+        "#FFF0F5\tLavenderBlush (W3C)\n" +
+        "#FDEEF4\tPearl\n" +
+        "#FFF9E3\tEgg Shell\n" +
+        "#FEF0E3\tOldLace (W3C)\n" +
+        "#EAEEE9\tWhite Ice\n" +
+        "#FAF0E6\tLinen (W3C)\n" +
+        "#FFF5EE\tSeaShell (W3C)\n" +
+        "#F9F6EE\tBone White\n" +
+        "#FAF5EF\tRice\n" +
+        "#FFFAF0\tFloralWhite (W3C)\n" +
+        "#FFFFF0\tIvory (W3C)\n" +
+        "#FFFFF4\tWhite Gold\n" +
+        "#FFFFF7\tLight White\n" +
+        "#F5F5F5\tWhiteSmoke (W3C)\n" +
+        "#FBFBF9\tCotton\n" +
+        "#FFFAFA\tSnow (W3C)\n" +
+        "#FEFCFF\tMilk White\n" +
+        "#FFFEFA\tHalf White\n" +
+        "#FFFFFF\tWhite (W3C)\n").split("\n").map(value => { return {code : value.split("\t")[0], name: value.split("\t")[1]} });
+    function searchColors(search) {
+        if (search === "") {
+            return "";
+        }
+        var str = "";
+        for (const color of COLORS) {
+            if (color.name && color.name.indexOf(search) >= 0) {
+                str += `<div style='background-color:${color.code}; padding: 4px; border-radius: 4px'>${color.code} - ${color.name}</div>`
+            }
+        }
+        if (str === "") {
+            return "<em>No Matching Results!</em>"
+        } else {
+            return str;
+        }
+    }
+</script>
+
+    <hr/>
+
+    <h2><a id="lazy-load" href="lazy-laod">Lazy Load</a></h2>
+    <p style="margin-bottom: 3500px;">
+        At the bottom of this page is a div that implements the lazy-load pattern discussed in section 3.4.
+        The lazy load pattern can be triggered by scrolling to the bottom of this page.  When the div is scrolled
+        into the browser viewport, it will lazily load the content "This is some lazily loaded content".
+    </p>
+
+    <div hx-trigger="revealed"
+         hx-get="/content"
+         hx-target="this">
+        Placeholder...
+    </div>
+    <template url="/content" delay="1000">
+        <p>
+            This is some lazily loaded content
+        </p>
+    </template>
+
+</main>
+</body>
+
+</html>
